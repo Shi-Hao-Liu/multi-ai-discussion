@@ -1,0 +1,36 @@
+{
+  "name": "multi-model-debate",
+  "version": "1.0.0",
+  "description": "Multi-Model Debate System - orchestrates discussions among multiple LLM agents",
+  "main": "dist/main.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/main.js",
+    "dev": "ts-node src/main.ts",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+    "clean": "rm -rf dist"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Shi-Hao-Liu/multi-ai-discussion.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Shi-Hao-Liu/multi-ai-discussion/issues"
+  },
+  "homepage": "https://github.com/Shi-Hao-Liu/multi-ai-discussion#readme",
+  "description": "",
+  "devDependencies": {
+    "@types/jest": "^30.0.0",
+    "@types/node": "^25.0.0",
+    "fast-check": "^4.4.0",
+    "jest": "^30.2.0",
+    "ts-jest": "^29.4.6",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.9.3"
+  }
+}
