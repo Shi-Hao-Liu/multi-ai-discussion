@@ -66,7 +66,7 @@ export class RoundManager {
     if (previousRounds.length > 0) {
       messages.push({
         role: 'user',
-        content: 'Please provide your response considering the above perspectives.'
+        content: 'Please provide your response considering the above perspectives. Try to control the lenght of the response in less than 1000 words.'
       });
     }
 
@@ -87,7 +87,7 @@ export class RoundManager {
           model,
           messages,
           temperature: 0.7,
-          max_tokens: 1000
+          max_tokens: 8000
         });
 
         if (response.choices && response.choices.length > 0) {

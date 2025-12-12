@@ -33,7 +33,7 @@ export class Synthesizer {
     const messages: Message[] = [
       {
         role: 'system',
-        content: 'You are a synthesis expert. Your task is to analyze a complete debate between multiple AI agents and create a comprehensive, well-reasoned final answer that incorporates the best insights from all participants. Focus on synthesizing different perspectives rather than simply summarizing them.'
+        content: 'You are a neutral synthesis expert. Your ONLY task is to objectively summarize and consolidate the viewpoints expressed by the AI agents in the debate. Do NOT add your own opinions, interpretations, or additional insights. Simply organize and present what the agents have said in a clear, structured manner. The final deliverable must be a polished, insight-driven document—ideally structured as “Executive Summary → Timeline/Key Facts → Thematic Analysis → Risks & Next Steps.” Never append raw child Markdown directly to customer-facing output.'
       },
       {
         role: 'user',
@@ -88,13 +88,15 @@ export class Synthesizer {
     });
 
     prompt += `=== SYNTHESIS INSTRUCTIONS ===\n\n`;
-    prompt += `Your task is to create a final answer that:\n`;
-    prompt += `1. Incorporates key points and insights from ALL participating agents\n`;
-    prompt += `2. Identifies areas of agreement and synthesizes them into coherent conclusions\n`;
-    prompt += `3. Addresses any remaining disagreements by weighing the evidence and arguments\n`;
-    prompt += `4. Provides a well-reasoned, comprehensive response to the original topic\n`;
-    prompt += `5. Acknowledges the perspectives that contributed to the final answer\n\n`;
-    prompt += `Please provide your synthesized final answer:`;
+    prompt += `Your task is to create a neutral summary that:\n`;
+    prompt += `1. ONLY presents the viewpoints and arguments made by the participating agents\n`;
+    prompt += `2. Organizes these viewpoints in a clear, structured manner\n`;
+    prompt += `3. Identifies areas where agents agreed or disagreed\n`;
+    prompt += `4. Does NOT add your own opinions, interpretations, or additional analysis\n`;
+    prompt += `5. Does NOT make judgments about which arguments are better\n`;
+    prompt += `6. Simply consolidates what the agents said without editorial commentary\n\n`;
+    prompt += `IMPORTANT: Do not inject your own perspective. Only summarize what the agents expressed.\n\n`;
+    prompt += `Please provide your neutral synthesis of the agents' viewpoints:`;
 
     return prompt;
   }

@@ -42,7 +42,7 @@ export class Moderator {
     const messages: Message[] = [
       {
         role: 'system',
-        content: 'You are a debate moderator. Analyze the provided debate rounds and determine if the participants have reached convergence. Respond with a JSON object containing: {"isConverged": boolean, "confidenceScore": number, "reasoning": string}. The confidenceScore must be between 0 and 1.'
+        content: 'You are a debate moderator. Analyze the provided debate rounds and determine if the participants have reached convergence. You MUST respond ONLY with a valid JSON object in this exact format: {"isConverged": boolean, "confidenceScore": number, "reasoning": string}. Do not include any other text before or after the JSON. The confidenceScore must be between 0 and 1.'
       },
       {
         role: 'user',
@@ -95,7 +95,9 @@ export class Moderator {
     prompt += `1. Are the agents' positions semantically aligned?\n`;
     prompt += `2. Have new substantive arguments stopped emerging?\n`;
     prompt += `3. Have agents acknowledged or incorporated others' points?\n\n`;
-    prompt += `Provide your assessment as JSON: {"isConverged": boolean, "confidenceScore": number, "reasoning": string}\n`;
+    prompt += `IMPORTANT: You MUST respond with ONLY a valid JSON object in this exact format:\n`;
+    prompt += `{"isConverged": boolean, "confidenceScore": number, "reasoning": string}\n\n`;
+    prompt += `Do not include any explanatory text, analysis, or commentary outside the JSON.\n`;
     prompt += `The confidenceScore should reflect how certain you are about the convergence assessment (0 = not certain, 1 = completely certain).`;
 
     return prompt;
@@ -106,13 +108,21 @@ export class Moderator {
    */
   private parseConvergenceResponse(content: string, threshold: number): ConvergenceAssessment {
     try {
-      // Extract JSON from response (handle cases where there might be extra text)
-      const jsonMatch = content.match(/\{[\s\S]*\}/);
-      if (!jsonMatch) {
-        throw new Error('No JSON found in response');
+      // Clean the content and try to extract JSON
+      const cleanContent = content.trim();
+      
+      // Try to parse the entire content as JSON first
+      let parsed;
+      try {
+        parsed = JSON.parse(cleanContent);
+      } catch {
+        // If that fails, try to extract JSON from response
+        const jsonMatch = cleanContent.match(/\{[\s\S]*?\}/);
+        if (!jsonMatch) {
+          throw new Error(`No JSON found in response. Raw content: ${cleanContent.substring(0, 200)}`);
+        }
+        parsed = JSON.parse(jsonMatch[0]);
       }
-
-      const parsed = JSON.parse(jsonMatch[0]);
       
       if (typeof parsed.isConverged !== 'boolean') {
         throw new Error('isConverged must be a boolean');
@@ -145,7 +155,7 @@ export class Moderator {
       return {
         isConverged: false, // Conservative fallback
         confidenceScore: 0,
-        reasoning: `Failed to parse moderator response: ${error instanceof Error ? error.message : 'Unknown error'}. Raw content: ${content.substring(0, 200)}...`
+        reasoning: `Failed to parse moderator response: ${error instanceof Error ? error.message : 'Unknown error'}. Raw content: ${content.substring(0, 200)}${content.length > 200 ? '...' : ''}`
       };
     }
   }
