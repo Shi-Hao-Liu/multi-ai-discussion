@@ -55,7 +55,7 @@ export class DebateOrchestrator {
    * @param session - The debate session to run
    * @returns Promise<DebateResult> - Complete debate result with final answer
    */
-  async runDebate(session: DebateSession): Promise<DebateResult> {
+  async runDebate(session: DebateSession, onRoundComplete?: (round: DebateRound) => void): Promise<DebateResult> {
     // Initialize moderator and synthesizer with models from config
     this.moderator = new Moderator(this.client, session.config.moderatorModel);
     this.synthesizer = new Synthesizer(this.client, session.config.synthesizerModel);
@@ -71,6 +71,11 @@ export class DebateOrchestrator {
       // Execute the next round
       const round = await this.executeRound(session);
       session.rounds.push(round);
+      
+      // Notify progress
+      if (onRoundComplete) {
+        onRoundComplete(round);
+      }
 
       // Evaluate convergence after the round (Requirement 4.2)
       const convergenceAssessment = await this.moderator.evaluateConvergence(
