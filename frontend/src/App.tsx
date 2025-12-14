@@ -51,7 +51,6 @@ const AVAILABLE_MODELS = [
 ];
 
 function App() {
-  const [apiKey, setApiKey] = useState('');
   const [topic, setTopic] = useState('What are the benefits of functional programming?');
   const [selectedModels, setSelectedModels] = useState<string[]>(['deepseek', 'gemini-2.5-pro']);
   const [maxRounds, setMaxRounds] = useState(5);
@@ -82,11 +81,6 @@ function App() {
   }, [chatHistory, session?.finalAnswer]);
 
   const startDebate = async () => {
-    if (!apiKey) {
-      setError('Please enter an API Key');
-      return;
-    }
-
     setIsDebating(true);
     setError(null);
     setSession(null);
@@ -111,8 +105,7 @@ function App() {
           maxRounds,
           convergenceThreshold,
           moderatorModel,
-          synthesizerModel,
-          apiKey
+          synthesizerModel
         })
       });
 
@@ -314,16 +307,7 @@ function App() {
             )}
 
             <div className={`space-y-4 ${isConfigCollapsed ? 'hidden' : 'block'}`}>
-              <div>
-                <label className="block text-sm text-secondary mb-1">API Key</label>
-                <input
-                  type="password"
-                  value={apiKey}
-                  onChange={e => setApiKey(e.target.value)}
-                  className="w-full bg-white/50 border border-secondary/30 rounded p-2 focus:ring-2 focus:ring-secondary outline-none text-primary placeholder-primary/50"
-                  placeholder="Enter AI Builder Token"
-                />
-              </div>
+
 
               <div>
                 <label className="block text-sm text-secondary mb-1">Topic</label>

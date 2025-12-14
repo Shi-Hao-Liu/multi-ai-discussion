@@ -1,4 +1,5 @@
 
+import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
 import path from 'path';
@@ -39,12 +40,13 @@ app.post('/api/debate', async (req, res) => {
             maxRounds,
             convergenceThreshold,
             moderatorModel,
-            synthesizerModel,
-            apiKey
+            synthesizerModel
         } = req.body;
 
+        // Use AI_BUILDER_TOKEN from environment instead of requiring from client
+        const apiKey = process.env.AI_BUILDER_TOKEN;
         if (!apiKey) {
-            return res.status(400).json({ error: 'API Key is required' });
+            return res.status(500).json({ error: 'AI_BUILDER_TOKEN environment variable is not configured' });
         }
 
         const client = new AIBuilderClient(apiKey);
