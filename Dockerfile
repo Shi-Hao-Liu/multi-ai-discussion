@@ -1,30 +1,21 @@
-FROM node:18-slim
+FROM node:18
 
 WORKDIR /app
 
-# Copy package files for both backend and frontend
-COPY package*.json ./
-COPY frontend/package*.json ./frontend/
+# Copy all files
+COPY . .
 
-# Install backend dependencies (including dev dependencies for build)
-RUN npm ci
+# Install backend dependencies
+RUN npm install
 
 # Install frontend dependencies and build
 WORKDIR /app/frontend
-RUN npm ci
+RUN npm install
 RUN npm run build
 
-# Go back to app root
+# Go back to app root and build backend
 WORKDIR /app
-
-# Copy source code
-COPY . .
-
-# Build the backend
 RUN npm run build
-
-# Clean up dev dependencies to reduce image size
-RUN npm ci --only=production && npm cache clean --force
 
 # Expose port (PORT will be set at runtime by Koyeb)
 EXPOSE 3000
