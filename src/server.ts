@@ -10,7 +10,7 @@ import { AVAILABLE_MODELS } from './debate';
 import { DebateSession } from './debate/session';
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = parseInt(process.env.PORT || '3000', 10);
 
 app.use(cors());
 app.use(express.json());
