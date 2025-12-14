@@ -2,24 +2,35 @@ FROM node:18
 
 WORKDIR /app
 
-# Copy all files
-COPY . .
+# Copy package files first for better caching
+COPY package*.json ./
+COPY frontend/package*.json ./frontend/
 
 # Install backend dependencies
 RUN npm install
 
-# Install frontend dependencies and build
+# Install frontend dependencies
 WORKDIR /app/frontend
 RUN npm install
+
+# Copy source code
+WORKDIR /app
+COPY . .
+
+# Build frontend first
+WORKDIR /app/frontend
 RUN npm run build
 
-# Go back to app root and build backend
+# Build backend
 WORKDIR /app
 RUN npm run build
+
+# Verify builds exist
+RUN ls -la dist/
+RUN ls -la frontend/dist/
 
 # Expose port (PORT will be set at runtime by Koyeb)
 EXPOSE 3000
 
 # Start application using PORT environment variable
-# Use shell form (sh -c) to ensure environment variable expansion
-CMD sh -c "node dist/server.js"
+CMD ["sh", "-c", "node dist/server.js"]
