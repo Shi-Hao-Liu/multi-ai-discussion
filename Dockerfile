@@ -1,4 +1,7 @@
-FROM node:18
+FROM node:18-alpine
+
+# Install system dependencies needed for native modules
+RUN apk add --no-cache python3 make g++
 
 WORKDIR /app
 
@@ -6,16 +9,19 @@ WORKDIR /app
 COPY package*.json ./
 COPY frontend/package*.json ./frontend/
 
-# Install backend dependencies
-RUN npm install
+# Install backend dependencies with production flag to reduce size
+RUN npm ci --only=production --no-audit --no-fund
 
 # Install frontend dependencies
 WORKDIR /app/frontend
-RUN npm install
+RUN npm ci --no-audit --no-fund
 
 # Copy source code
 WORKDIR /app
 COPY . .
+
+# Install dev dependencies needed for build
+RUN npm install typescript --no-audit --no-fund
 
 # Build frontend first
 WORKDIR /app/frontend
@@ -25,12 +31,15 @@ RUN npm run build
 WORKDIR /app
 RUN npm run build
 
-# Verify builds exist
-RUN ls -la dist/
-RUN ls -la frontend/dist/
+# Clean up to reduce image size
+RUN npm prune --production
+WORKDIR /app/frontend
+RUN rm -rf node_modules
+WORKDIR /app
+RUN rm -rf src frontend/src
 
 # Expose port (PORT will be set at runtime by Koyeb)
 EXPOSE 3000
 
 # Start application using PORT environment variable
-CMD ["sh", "-c", "node dist/server.js"]
+CMD ["node", "dist/server.js"]
