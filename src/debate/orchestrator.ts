@@ -55,7 +55,11 @@ export class DebateOrchestrator {
    * @param session - The debate session to run
    * @returns Promise<DebateResult> - Complete debate result with final answer
    */
-  async runDebate(session: DebateSession, onRoundComplete?: (round: DebateRound) => void): Promise<DebateResult> {
+  async runDebate(
+    session: DebateSession,
+    onRoundComplete?: (round: DebateRound) => void,
+    onAgentResponse?: (response: any) => void
+  ): Promise<DebateResult> {
     // Initialize moderator and synthesizer with models from config
     this.moderator = new Moderator(this.client, session.config.moderatorModel);
     this.synthesizer = new Synthesizer(this.client, session.config.synthesizerModel);
@@ -69,9 +73,9 @@ export class DebateOrchestrator {
     // Execute rounds until convergence or max rounds (Requirements 4.2, 4.3)
     while (session.rounds.length < session.config.maxRounds && !convergenceAchieved) {
       // Execute the next round
-      const round = await this.executeRound(session);
+      const round = await this.executeRound(session, onAgentResponse);
       session.rounds.push(round);
-      
+
       // Notify progress
       if (onRoundComplete) {
         onRoundComplete(round);
@@ -121,11 +125,41 @@ export class DebateOrchestrator {
   }
 
   /**
+   * Continues an existing debate with new instructions
+   */
+  async continueDebate(
+    session: DebateSession,
+    instructions: string,
+    onRoundComplete?: (round: DebateRound) => void,
+    onAgentResponse?: (response: any) => void
+  ): Promise<DebateResult> {
+    // Reset status to allow more rounds
+    session.status = 'in_progress';
+    session.finalAnswer = undefined; // Clear previous answer
+
+    // Add the user instruction as a special "system" context for the next rounds
+    // In a real implementation, we might want to track this in a "turns" structure
+    // For now, we'll append to the topic or similar mechanism, but better is to let the RoundManager handle context
+    // Ideally session.rounds should support user interventions. 
+    // We will handle this by appending a fake "round" or just relying on context builder.
+    // However, RoundManager builds context from rounds. 
+    // We will need to adapt RoundManager or Session structure to support user input in between.
+    // For simplicity in this iteration: We assume RoundManager uses all previous rounds. 
+    // We can inject the user instruction into the session config or a new field.
+
+    // Update maxRounds to allow continuation
+    session.config.maxRounds += 3; // Add 3 more rounds by default
+
+    // Re-run the main loop
+    return this.runDebate(session, onRoundComplete, onAgentResponse);
+  }
+
+  /**
    * Executes a single debate round
    * @param session - The current debate session
    * @returns Promise<DebateRound> - The completed round
    */
-  private async executeRound(session: DebateSession): Promise<DebateRound> {
-    return await this.roundManager.executeRound(session);
+  private async executeRound(session: DebateSession, onAgentResponse?: (response: any) => void): Promise<DebateRound> {
+    return await this.roundManager.executeRound(session, onAgentResponse);
   }
 }

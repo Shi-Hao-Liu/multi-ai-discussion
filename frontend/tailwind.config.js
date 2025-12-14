@@ -5,7 +5,16 @@ export default {
         "./src/**/*.{js,ts,jsx,tsx}",
     ],
     theme: {
-        extend: {},
+        extend: {
+            colors: {
+                primary: '#3674B5',
+                secondary: '#578FCA',
+                accent: '#A1E3F9',
+                background: '#FAF3E1',
+            }
+        },
     },
-    plugins: [],
+    plugins: [
+        require('@tailwindcss/typography'),
+    ],
 }

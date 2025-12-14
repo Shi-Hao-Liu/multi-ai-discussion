@@ -19,14 +19,21 @@ export class RoundManager {
    * @param session - The current debate session
    * @returns Promise resolving to the completed round
    */
-  async executeRound(session: DebateSession): Promise<DebateRound> {
+  async executeRound(session: DebateSession, onAgentResponse?: (response: AgentResponse) => void): Promise<DebateRound> {
     const roundNumber = session.rounds.length + 1;
     const contextMessages = this.buildContextMessages(session.config.topic, session.rounds);
-    
+
     // Send requests to all participating agents concurrently
-    const responsePromises = session.config.models.map(model => 
-      this.getAgentResponse(model, contextMessages)
-    );
+    const responsePromises = session.config.models.map(async model => {
+      const response = await this.getAgentResponse(model, contextMessages);
+
+      // Notify when this specific agent is done
+      if (response && onAgentResponse) {
+        onAgentResponse(response);
+      }
+
+      return response;
+    });
 
     // Collect all responses
     const responses = await Promise.all(responsePromises);
@@ -101,7 +108,7 @@ export class RoundManager {
         }
       } catch (error) {
         lastError = error as Error;
-        
+
         // Don't retry on authentication errors
         if (error instanceof Error && error.message.includes('401')) {
           break;

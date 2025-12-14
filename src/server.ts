@@ -75,6 +75,28 @@ app.post('/api/debate', async (req, res) => {
     }
 });
 
+// API: Continue a debate
+app.post('/api/debate/:id/continue', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { instructions } = req.body;
+
+        const sessionData = sessions.get(id);
+        if (!sessionData) {
+            return res.status(404).json({ error: 'Session not found' });
+        }
+
+        // Logic to clear "completed" state if needed and start running again
+        // We'll run in background similar to start
+        runDebateInBackground(id, true, instructions);
+
+        res.json({ success: true, message: 'Debate continuing' });
+    } catch (error: any) {
+        console.error('Error continuing debate:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
 // API: SSE Stream for a debate session
 app.get('/api/debate/:id/stream', (req, res) => {
     const { id } = req.params;
@@ -105,17 +127,38 @@ app.get('/api/debate/:id/stream', (req, res) => {
     });
 });
 
-async function runDebateInBackground(sessionId: string) {
+async function runDebateInBackground(sessionId: string, isContinuation: boolean = false, instructions?: string) {
     const sessionData = sessions.get(sessionId);
     if (!sessionData) return;
 
     const { orchestrator, session } = sessionData;
 
     try {
-        const result = await orchestrator.runDebate(session, (round) => {
+        const onRoundComplete = (round: any) => {
             // Broadcast round update
             broadcast(sessionId, { type: 'round', round });
-        });
+        };
+
+        const onAgentResponse = (response: any) => {
+            broadcast(sessionId, { type: 'agent_response', response });
+        };
+
+        let result;
+        if (isContinuation && instructions) {
+            // We need to inject the instructions into the context somehow.
+            // For now, let's append it to the topic so it persists, or handle it via a new mechanism
+            // Ideally we'd have a 'turns' array, but sticking to the current 'rounds' model:
+            // We can treat it as a Topic Update or just rely on the fact that Orchestrator.continueDebate
+            // will handle it (if we implemented it fully).
+            // NOTE: In the orchestrator change above, I didn't fully implement "inject instructions into context".
+            // Let's do a quick fix: Append to topic or assume `continueDebate` does the right thing.
+            // Since `continueDebate` just calls `runDebate`, we might need to update the topic locally here.
+            session.config.topic += `\n\n[User Intervention]: ${instructions}`;
+
+            result = await orchestrator.continueDebate(session, instructions, onRoundComplete, onAgentResponse);
+        } else {
+            result = await orchestrator.runDebate(session, onRoundComplete, onAgentResponse);
+        }
 
         // Broadcast completion
         broadcast(sessionId, {
